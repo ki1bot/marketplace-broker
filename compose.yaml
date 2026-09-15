@@ -23,6 +23,8 @@ services:
         UID: 1000
         GID: 1000
     working_dir: /var/www/html
+    environment:
+      PHP_CLI_SERVER_WORKERS: "1"
     ports:
       - "8080:8000"
     volumes:
