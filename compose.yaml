@@ -4,10 +4,9 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-    ports:
-      - "8080:8000"
     volumes:
       - mysql_data:/var/lib/mysql
+      - mysql_socket:/var/run/mysqld
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot --silent"]
       interval: 5s
@@ -20,10 +19,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
     working_dir: /var/www/html
-    network_mode: "service:mysql"
+    ports:
+      - "8080:8000"
     volumes:
       - .:/var/www/html
+      - mysql_socket:/var/run/mysqld
     depends_on:
       mysql:
         condition: service_healthy
@@ -44,3 +48,4 @@ services:
 
 volumes:
   mysql_data:
+  mysql_socket:

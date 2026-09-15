@@ -28,6 +28,11 @@ RUN groupadd --gid "${GID}" laravel \
     && mkdir -p /var/www/html \
     && chown -R laravel:laravel /var/www/html
 
+RUN printf "pdo_mysql.default_socket=/var/run/mysqld/mysqld.sock\n" \
+    > /usr/local/etc/php/conf.d/mysql-socket.ini
+
+RUN git config --system --add safe.directory /var/www/html
+
 WORKDIR /var/www/html
 
 USER laravel
