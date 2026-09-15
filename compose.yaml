@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${DOCKER_UID:-1000}
+        GID: ${DOCKER_GID:-1000}
+    working_dir: /var/www/html
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "${DB_FORWARD_PORT:-3307}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-marketplace_broker}
+      MYSQL_USER: ${DB_USERNAME:-marketplace}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-marketplace}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'mysqladmin ping -h 127.0.0.1 -uroot -p"$${MYSQL_ROOT_PASSWORD}" --silent',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    restart: unless-stopped
+
+  node:
+    image: node:22-bookworm-slim
+    working_dir: /var/www/html
+    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - .:/var/www/html
+    environment:
+      NPM_CONFIG_CACHE: /tmp/npm-cache
+    command: npm run dev -- --host=0.0.0.0 --port=5173
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
